@@ -2,18 +2,8 @@ import { useEffect, useState } from "react";
 import reactLogo from "./assets/react.svg";
 import viteLogo from "/vite.svg";
 import "./App.css";
-import { getApps, initializeApp } from "firebase/app";
-import {
-  EmailAuthProvider,
-  FacebookAuthProvider,
-  getAuth,
-  GithubAuthProvider,
-  GoogleAuthProvider,
-  onAuthStateChanged,
-  signOut,
-  TwitterAuthProvider,
-} from "firebase/auth";
 import { StyledFirebaseAuth } from "react-firebaseui";
+import firebase from "firebase";
 
 function App() {
   const [user, setUser] = useState({ id: "", name: "", email: "" });
@@ -27,25 +17,28 @@ function App() {
     appId: import.meta.env.VITE_FIREBASE_APP_ID,
     measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID,
   };
-  const firebaseApp =
-    getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
 
-  const auth = getAuth(firebaseApp);
+  let app;
+  if (!firebase.apps.length) {
+    app = firebase.initializeApp(firebaseConfig);
+  } else {
+    app = firebase.app(); // if already initialized, use that one
+  }
 
   const uiConfig = {
     signInFlow: "popup",
     signInSuccessUrl: "/",
     signInOptions: [
-      GoogleAuthProvider.PROVIDER_ID,
-      FacebookAuthProvider.PROVIDER_ID,
-      TwitterAuthProvider.PROVIDER_ID,
-      GithubAuthProvider.PROVIDER_ID,
-      EmailAuthProvider.PROVIDER_ID,
+      firebase.auth.GoogleAuthProvider.PROVIDER_ID,
+      firebase.auth.FacebookAuthProvider.PROVIDER_ID,
+      firebase.auth.TwitterAuthProvider.PROVIDER_ID,
+      firebase.auth.GithubAuthProvider.PROVIDER_ID,
+      firebase.auth.EmailAuthProvider.PROVIDER_ID,
     ],
   };
 
   useEffect(() => {
-    onAuthStateChanged(auth, (user) => {
+    app.auth().onAuthStateChanged((user) => {
       console.log(user);
       if (user) {
         setUser({
@@ -79,8 +72,8 @@ function App() {
           Email: <span>{user.email}</span>
         </div>
       </div>
-      <StyledFirebaseAuth uiConfig={uiConfig} firebaseAuth={auth} />
-      <button onClick={() => signOut(auth)}>Sign Out</button>
+      <StyledFirebaseAuth uiConfig={uiConfig} firebaseAuth={app.auth()} />
+      <button onClick={() => app.auth().signOut()}>Sign Out</button>
     </>
   );
 }
